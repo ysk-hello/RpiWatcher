@@ -1,0 +1,19 @@
+[Unit]
+Description=RpiWatcher (C# watcher lamp)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/pi/rpiwatcher
+# Framework-dependent run: .NET installed under ~/.dotnet
+Environment=DOTNET_ROOT=/home/pi/.dotnet
+ExecStart=/home/pi/.dotnet/dotnet /home/pi/rpiwatcher/RpiWatcher.dll
+# Restart automatically even after an abnormal exit (chapter 7)
+Restart=always
+RestartSec=3
+User=pi
+# UI language (set to en for English logs)
+Environment=RPIWATCHER_LANG=ja
+
+[Install]
+WantedBy=multi-user.target

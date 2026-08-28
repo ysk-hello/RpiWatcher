@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": ".NET Remote Launch",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "/home/pi/.dotnet/dotnet",
+      "args": [ "/home/pi/rpiwatcher/RpiWatcher.dll" ],
+      "cwd": "/home/pi/rpiwatcher",
+      "justMyCode": false,
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "logging": { "moduleLoad": false },
+      "pipeTransport": {
+        "pipeCwd": "${workspaceRoot}",
+        "pipeProgram": "ssh",
+        "pipeArgs": [ "pi@raspberrypi" ],
+        "debuggerPath": "/home/pi/vsdbg/vsdbg"
+      }
+    }
+  ]
+}

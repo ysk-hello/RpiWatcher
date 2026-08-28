@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>RpiWatcher</RootNamespace>
+    <AssemblyName>RpiWatcher</AssemblyName>
+    <!-- カルチャ（多言語）を有効にする。false だと衛星アセンブリが無視される -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <!-- 実機向けの発行に使う識別子（64bit / 32bit） -->
+    <RuntimeIdentifiers>linux-arm64;linux-arm</RuntimeIdentifiers>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Device.Gpio" Version="4.2.0" />
+  </ItemGroup>
+
+</Project>
