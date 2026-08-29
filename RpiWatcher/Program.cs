@@ -3,13 +3,13 @@ using System.Runtime.InteropServices;
 
 namespace RpiWatcher;
 
-// エントリポイント。
-// 役割: 設定を読み、GPIO を用意し、
-// 安全に停止できる形で本体を回す。
+// Entry point.
+// Role: read the options, set up GPIO, and run the
+// main loop in a way that can stop safely.
 internal static class Program
 {
-    // SIGTERM 登録を保持する
-    // （破棄されると解除されるため）。
+    // Keep the SIGTERM registration alive
+    // (it is unregistered when disposed).
     private static readonly List<IDisposable> Signals
         = new();
 
@@ -39,7 +39,8 @@ internal static class Program
         catch (Exception ex)
         {
             Log.Error(Strings.Get("GpioInitFailed"));
-            // 実機での切り分け用に、実際の例外を常に出す。
+            // Always print the real exception to help
+            // diagnose the cause on the device.
             Log.Error(ex.Message);
             gpio.Dispose();
             return 1;
@@ -53,8 +54,8 @@ internal static class Program
         return 0;
     }
 
-    // Ctrl+C と SIGTERM（systemctl stop）で
-    // 停止フラグを立てる。後始末は本体側で行う。
+    // Raise the stop flag on Ctrl+C and SIGTERM
+    // (systemctl stop). Cleanup happens in the main loop.
     private static void HookShutdown(
         CancellationTokenSource cts)
     {
@@ -77,11 +78,11 @@ internal static class Program
         }
         catch
         {
-            // POSIX 以外では無視する。
+            // Ignore on non-POSIX platforms.
         }
     }
 
-    // --lang か環境変数で UI 言語を切り替える。
+    // Switch the UI language via --lang or an env var.
     private static void ConfigureCulture(Options opt)
     {
         string? lang = opt.Lang
@@ -98,13 +99,13 @@ internal static class Program
         }
         catch
         {
-            // 未知のカルチャは既定のまま。
+            // Keep the default for an unknown culture.
         }
     }
 
-    // 標準出力を即時フラッシュにする。
-    // systemd 経由だと既定では
-    // バッファされ、journal に出ないため。
+    // Flush stdout immediately. Under systemd the output
+    // is buffered by default and would not reach the
+    // journal until the buffer fills.
     private static void ConfigureStdout()
     {
         var w = new StreamWriter(

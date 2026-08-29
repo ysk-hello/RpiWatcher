@@ -7,9 +7,9 @@
     <Nullable>enable</Nullable>
     <RootNamespace>RpiWatcher</RootNamespace>
     <AssemblyName>RpiWatcher</AssemblyName>
-    <!-- カルチャ（多言語）を有効にする。false だと衛星アセンブリが無視される -->
+    <!-- Enable cultures (localization). If false, satellite assemblies are ignored -->
     <InvariantGlobalization>false</InvariantGlobalization>
-    <!-- 実機向けの発行に使う識別子（64bit / 32bit） -->
+    <!-- Runtime identifiers for publishing to the device (64-bit / 32-bit) -->
     <RuntimeIdentifiers>linux-arm64;linux-arm</RuntimeIdentifiers>
   </PropertyGroup>
 

@@ -2,11 +2,11 @@ using System.Device.Gpio;
 
 namespace RpiWatcher;
 
-// System.Device.Gpio を使う本番の実装。
-// LED を出力、入力ピンを内部プルアップにし、
-// GND に落ちた瞬間（Falling）を拾う。
-// ボタンは不要。入力ピンと GND を
-// ジャンパー線でつなぐだけでよい。
+// Production implementation backed by System.Device.Gpio.
+// Drives the LED as output, sets the input pin to
+// internal pull-up, and catches the moment it is pulled
+// to GND (the falling edge). A push button pressing the
+// pin to GND triggers it; a jumper wire works too.
 internal sealed class RealGpio : IGpio
 {
     private readonly int _ledPin;
@@ -42,10 +42,11 @@ internal sealed class RealGpio : IGpio
                 OnPinFalling);
     }
 
-    // 別スレッドで呼ばれる点に注意。
-    // チャタリング（1回の接触で複数エッジ）を、
-    // 直前のエッジから一定時間内は無視して
-    // 1回にまとめる（ソフトウェアデバウンス）。
+    // Note: this is invoked on a separate thread.
+    // Collapses contact bounce (multiple edges from one
+    // press) into one by ignoring edges that arrive
+    // within a set window of the previous edge
+    // (software debounce).
     private void OnPinFalling(
         object sender,
         PinValueChangedEventArgs e)
@@ -69,8 +70,8 @@ internal sealed class RealGpio : IGpio
             on ? PinValue.High : PinValue.Low);
     }
 
-    // 後始末: LED を消してピンを解放する。
-    // ここを怠ると停止後も点きっぱなしになる。
+    // Cleanup: turn the LED off and release the pins.
+    // Skip this and the LED stays lit after the app stops.
     public void Dispose()
     {
         if (_controller is null)
@@ -83,7 +84,7 @@ internal sealed class RealGpio : IGpio
         }
         catch
         {
-            // すでに解放済みなら無視。
+            // Ignore if it was already released.
         }
 
         _controller.Dispose();

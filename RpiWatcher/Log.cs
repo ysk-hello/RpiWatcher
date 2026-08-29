@@ -8,9 +8,9 @@ internal enum LogLevel
     Error,
 }
 
-// 最小のログ。標準出力に1行ずつ書く。
-// 実機では systemd がこれを journal に集める
-// （journalctl -u rpiwatcher で読める）。
+// Minimal logger. Writes one line at a time to stdout.
+// On the device, systemd collects these into the journal
+// (read them with journalctl -u rpiwatcher).
 internal static class Log
 {
     public static LogLevel Level = LogLevel.Info;

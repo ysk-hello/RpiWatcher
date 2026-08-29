@@ -1,10 +1,10 @@
 namespace RpiWatcher;
 
-// 実機がない開発用の実装。
-// LED の状態はログに出し、
-// 入力は Enter キーで代用する。
-// 本文では実機（RealGpio）を扱う。
-// これは母艦だけで動作を試すための補助。
+// Development implementation with no real hardware.
+// LED state is written to the log, and input is
+// simulated with the Enter key.
+// The book works with the real device (RealGpio);
+// this is a helper for trying things on the dev machine.
 internal sealed class SimGpio : IGpio
 {
     private CancellationTokenSource? _cts;

@@ -3,10 +3,10 @@ using System.Resources;
 
 namespace RpiWatcher;
 
-// リソース文字列の窓口。
-// 文言はハードコードせず Resources/*.resx に置き、
-// カルチャ（ja / en）で切り替える。
-// 英語版はここを差し替えず en.resx を足すだけ。
+// Gateway to the resource strings.
+// Messages are not hard-coded; they live in
+// Resources/*.resx and switch by culture (ja / en).
+// The English build just adds en.resx here, no changes.
 internal static class Strings
 {
     private static readonly ResourceManager Rm =

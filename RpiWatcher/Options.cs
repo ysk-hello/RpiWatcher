@@ -1,32 +1,32 @@
 namespace RpiWatcher;
 
-// コマンドライン引数と既定値。
-// 例:
+// Command-line options and their defaults.
+// Examples:
 //   RpiWatcher --led 18 --input 24
 //   RpiWatcher --sim --lang en
 internal sealed class Options
 {
-    // LED をつなぐ GPIO 番号（BCM）。
+    // GPIO number (BCM) the LED is wired to.
     public int LedPin { get; private set; } = 18;
 
-    // 入力ピンの GPIO 番号（BCM）。
+    // GPIO number (BCM) of the input pin.
     public int InputPin { get; private set; } = 24;
 
-    // 点滅の間隔（ミリ秒）。
+    // Blink interval in milliseconds.
     public int IntervalMs { get; private set; } = 1000;
 
-    // デバウンス時間（ミリ秒）。
-    // この時間内の連続した入力は1回にまとめる
-    // （チャタリング対策）。
+    // Debounce time in milliseconds.
+    // Consecutive inputs within this window are
+    // collapsed into one (contact-bounce guard).
     public int DebounceMs { get; private set; } = 200;
 
-    // 実機を使わず動かす（開発用）。
+    // Run without real hardware (for development).
     public bool Sim { get; private set; }
 
-    // 詳細ログを出す。
+    // Emit verbose logs.
     public bool Verbose { get; private set; }
 
-    // UI 言語（例: "ja" / "en"）。
+    // UI language (e.g. "ja" / "en").
     public string? Lang { get; private set; }
 
     public static Options Parse(string[] args)

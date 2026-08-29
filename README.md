@@ -1,61 +1,72 @@
 # RpiWatcher
 
-書籍『C#/.NET で動かす Raspberry Pi 入門』の題材アプリ。
-ラズパイに付けた **LED 1個**で作る最小の「見張りランプ」。
-アプリ自体が目的ではなく、**配置（デプロイ）と実機デバッグの型**を学ぶための器です。
+The subject app for the book *Raspberry Pi with C# and .NET*.
+A minimal "watcher lamp" built from a **single LED** on the Pi.
+The app itself isn't the point — it's a vessel for learning the
+**deploy-and-on-device-debug pattern**.
 
-- `System.Device.Gpio` で LED を点滅（Lチカ）
-- 入力ピンを **内部プルアップ**にし、**押しボタンで GND につないだ瞬間**を検知してログ
-- systemd で自動起動・常駐、`journalctl` でログ、停止時に **LED 消灯＋ピン解放**
-- ログ文言は `Resources/*.resx` に分離（`ja` 既定、`en` 同梱＝英語版で流用）
+- Blink an LED (Blinky) with `System.Device.Gpio`
+- Set the input pin to **internal pull-up** and log the moment a
+  **push button pulls it to GND**
+- Auto-start and stay resident with systemd, read logs with
+  `journalctl`, and **turn the LED off + release the pins** on stop
+- Log messages live in `Resources/*.resx` (`ja` default, `en`
+  bundled = reused by the English edition)
 
-## 必要なもの
+## What you need
 
-- Raspberry Pi 2 以降（ARMv7+ / 64bit OS 推奨。**Pi Zero / Pi 1 は非対応**）
-- LED × 1、抵抗 330Ω × 1、押しボタン（タクトスイッチ）× 1、ブレッドボード × 1、ジャンパー線数本
-- 押しボタンが無ければ、入力はジャンパー線で GPIO24↔GND を一瞬つないでも代用できる
+- Raspberry Pi 2 or later (ARMv7+ / 64-bit OS recommended.
+  **Pi Zero / Pi 1 are not supported**)
+- 1 LED, 1 × 330Ω resistor, 1 push button (tact switch),
+  1 breadboard, a few jumper wires
+- No push button? You can stand in for the input by briefly
+  touching GPIO24 to GND with a jumper wire.
 
-## 配線（既定ピン）
+## Wiring (default pins)
 
-| 役割 | GPIO(BCM) | 物理ピン | つなぎ方 |
+| Role | GPIO (BCM) | Physical pin | Connection |
 |---|---|---|---|
-| LED | GPIO18 | 12番 | GPIO18 → LED(+) → 330Ω → GND |
-| 入力 | GPIO24 | 18番 | GPIO24 → 押しボタン → GND（押すと検知） |
+| LED | GPIO18 | pin 12 | GPIO18 → LED(+) → 330Ω → GND |
+| Input | GPIO24 | pin 18 | GPIO24 → push button → GND (press = detect) |
 
-入力は **GPIO24＝物理18番**、隣の **物理20番＝GND**。押しボタンでこの2本をつなぐ
-（ボタンが無ければジャンパー線で一瞬つないでも可）。ピンは `--led` / `--input` で変更可。
+Input is **GPIO24 = physical pin 18**, with the neighboring
+**physical pin 20 = GND**. A push button bridges these two
+(a jumper wire touched briefly works too). Change the pins with
+`--led` / `--input`.
 
-## 母艦だけで試す（実機なし・開発用）
+## Try it on the dev machine (no hardware, for development)
 
 ```bash
 dotnet run --project RpiWatcher -- --sim --verbose
 ```
 
-`--sim` では LED 状態をログに出し、**Enter キーで入力**を代用します
-（本編では実機の GPIO を扱います。これは母艦確認用の補助）。
+With `--sim`, LED state is written to the log and **the Enter key
+stands in for the input** (the book works with real GPIO on the
+device; this is just a helper for checking things on your PC).
 
-## 実機へ配置する（3章：publish → 転送 → 実行）
+## Deploy to the device (Chapter 3: publish → transfer → run)
 
-**フレームワーク依存**で発行すると軽く、転送が速い（実機に .NET を一度だけ入れておく）。
+Publishing **framework-dependent** keeps the payload small and the
+transfer fast (install .NET on the device once, up front).
 
-実機に .NET を入れる（最初の1回だけ）:
+Install .NET on the device (one time only):
 
 ```bash
-# 実機（SSH先）
+# On the device (over SSH)
 curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel LTS
-# ~/.bashrc に追記
+# Add to ~/.bashrc
 export DOTNET_ROOT=$HOME/.dotnet
 export PATH=$PATH:$HOME/.dotnet
 ```
 
-配置:
+Deploy:
 
 ```powershell
-# 母艦（Windows）から一括で
+# From the dev machine (Windows), all in one step
 ./deploy/deploy.ps1 -PiHost pi@raspberrypi
 ```
 
-手動なら:
+Or manually:
 
 ```bash
 dotnet publish RpiWatcher/RpiWatcher.csproj -c Release -o ./publish
@@ -63,66 +74,82 @@ scp -r ./publish pi@raspberrypi:~/rpiwatcher
 ssh pi@raspberrypi "~/.dotnet/dotnet ~/rpiwatcher/RpiWatcher.dll"
 ```
 
-> 実機に .NET を入れたくないときは自己完結型（`-r linux-arm64 --self-contained`、32bit は `linux-arm`）。転送は数十MBと重くなる。
+> If you'd rather not install .NET on the device, publish
+> self-contained (`-r linux-arm64 --self-contained`, or `linux-arm`
+> for 32-bit). The transfer grows to tens of MB.
 
-## 実機を止めて見る（5章：リモートデバッグ・VS Code）
+## Stop it on the device and look (Chapter 5: remote debugging, VS Code)
 
-1. パスワードなし SSH を用意（`ssh-keygen -t ed25519` → `ssh-copy-id pi@raspberrypi`）
-2. 実機に vsdbg を入れる
+1. Set up passwordless SSH (`ssh-keygen -t ed25519` →
+   `ssh-copy-id pi@raspberrypi`)
+2. Install vsdbg on the device
 
    ```bash
    curl -sSL https://aka.ms/getvsdbgsh | /bin/sh /dev/stdin -v latest -l ~/vsdbg
    ```
 
-3. **Debug で発行**して配置（pdb が要る）：`dotnet publish -c Debug -o ./publish` → `scp -r ./publish pi@raspberrypi:~/rpiwatcher`
-4. `deploy/launch.sample.json` を `.vscode/launch.json` にコピー（`pipeArgs` のホストを自分の実機に）
-5. `WatcherService.OnInput` にブレークポイント → **F5** → 実機でアプリが起動 → **ボタンを押す** → 停止して `count` を見る
+3. **Publish in Debug** and deploy (you need the pdb):
+   `dotnet publish -c Debug -o ./publish` →
+   `scp -r ./publish pi@raspberrypi:~/rpiwatcher`
+4. Copy `deploy/launch.sample.json` to `.vscode/launch.json`
+   (set the host in `pipeArgs` to your device)
+5. Set a breakpoint on `WatcherService.OnInput` → **F5** → the app
+   starts on the device → **press the button** → it breaks and you
+   can inspect `count`
 
-> 常駐サービスを動かしているときは、先に `sudo systemctl stop rpiwatcher`（ピンの二重使用を避ける）。
+> If the resident service is running, stop it first with
+> `sudo systemctl stop rpiwatcher` (to avoid using the pins twice).
 
-## 動かし続ける（7章：自動起動・常駐・定期実行）
+## Keep it running (Chapter 7: auto-start, residency, scheduling)
 
 ```bash
-# サービス登録（deploy/rpiwatcher.service を配置）
+# Register the service (deploy/rpiwatcher.service)
 sudo cp deploy/rpiwatcher.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now rpiwatcher
 
-# ログを見る
+# Watch the logs
 journalctl -u rpiwatcher -f
 
-# 停止（LED が消え、ピンが解放されることを確認）
+# Stop it (confirm the LED goes off and the pins are released)
 sudo systemctl stop rpiwatcher
 ```
 
-定期実行にしたいときは cron か systemd timer を使う（7章）。
+For scheduled runs, use cron or a systemd timer (Chapter 7).
 
-## オプション
+## Options
 
-| 引数 | 既定 | 意味 |
+| Argument | Default | Meaning |
 |---|---|---|
-| `--led N` | 18 | LED の GPIO 番号 |
-| `--input N` | 24 | 入力の GPIO 番号 |
-| `--interval MS` | 1000 | 点滅間隔（ミリ秒） |
-| `--debounce MS` | 200 | デバウンス時間。連続入力を1回にまとめる |
-| `--lang ja\|en` | ja | UI 言語（`RPIWATCHER_LANG` でも可） |
-| `--sim` | off | 実機なしで動かす（開発用） |
-| `--verbose` | off | 詳細ログ |
+| `--led N` | 18 | GPIO number for the LED |
+| `--input N` | 24 | GPIO number for the input |
+| `--interval MS` | 1000 | Blink interval (ms) |
+| `--debounce MS` | 200 | Debounce time; collapses repeated inputs into one |
+| `--lang ja\|en` | ja | UI language (`RPIWATCHER_LANG` also works) |
+| `--sim` | off | Run without hardware (for development) |
+| `--verbose` | off | Verbose logs |
 
-## よくある症状
+## Common symptoms
 
-- **1回の接触で複数回検知される** → チャタリング（スイッチのバウンス）。
-  接点が数ミリ秒のあいだにオン/オフを繰り返すため。ソフトウェアデバウンスで
-  一定時間内の連続エッジを1回にまとめている（既定200ms）。まだ多重検知するなら
-  `--debounce` の値をさらに大きくする。押しボタンでもジャンパー線でも起こる。
+- **One press is detected several times** → contact bounce (switch
+  bounce). The contacts flip on/off over a few milliseconds. A
+  software debounce collapses the repeated edges within a set
+  window into one (default 200 ms). If it still multi-triggers,
+  raise `--debounce`. It happens with both a push button and a
+  jumper wire.
 
-## ライセンス / 注意
+## License / cautions
 
-- **入力ピン ↔ GND は安全**。GPIO24 は内部プルアップ（約50kΩ）の入力なので、
-  GND につないでも流れる電流は約66µA と微小。公式チュートリアルと同じ使い方。
-- ただし **出力HIGH のピンや電源ピン（5V/3.3V）を GND に直結するのは厳禁**（短絡）。
-  GPIO に **5V を入力**するのも不可（GPIO は 5V 非対応）。事故の多くは**ピンの数え間違い**。
-- 配線の向き・抵抗値・入力モードを誤ると**基板や部品を壊しうる**。
-  表のとおりに接続し、通電前に確認すること。
-- .NET / Raspberry Pi OS 等のバージョン・手順は変わりうる。
-  最新は公式（Microsoft Learn `.NET IoT`）を参照。
+- **Input pin ↔ GND is safe.** GPIO24 is an input with internal
+  pull-up (~50kΩ), so touching it to GND draws only about 66 µA —
+  the same usage as the official tutorial.
+- But **never tie an output-HIGH pin or a power pin (5V/3.3V)
+  directly to GND** (a short). And **do not feed 5V into a GPIO**
+  (GPIO is not 5V-tolerant). Most accidents come from
+  **miscounting pins**.
+- Wrong polarity, resistor value, or input mode can **damage the
+  board or parts**. Wire it exactly as the table shows and
+  double-check before powering on.
+- .NET, Raspberry Pi OS, and the steps here can change over time.
+  For the latest, see the official docs (Microsoft Learn
+  `.NET IoT`).

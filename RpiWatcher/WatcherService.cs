@@ -1,8 +1,8 @@
 namespace RpiWatcher;
 
-// アプリ本体（見張りランプ）。
-// LED を一定間隔で点滅させ、
-// 入力を検知したらログに残す。
+// The app itself (the watcher lamp).
+// Blinks the LED at a fixed interval and logs
+// every input it detects.
 internal sealed class WatcherService : IDisposable
 {
     private readonly IGpio _gpio;
@@ -38,9 +38,9 @@ internal sealed class WatcherService : IDisposable
         Log.Info(Strings.Get("Stopping"));
     }
 
-    // 入力ハンドラ。
-    // リモートデバッグでは、この行に
-    // ブレークポイントを張って count を見る。
+    // Input handler.
+    // In remote debugging, set a breakpoint on this line
+    // and inspect count.
     private void OnInput()
     {
         _count++;
