@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace RpiWatcher;
 
@@ -106,10 +107,26 @@ internal static class Program
     // Flush stdout immediately. Under systemd the output
     // is buffered by default and would not reach the
     // journal until the buffer fills.
+    // Also force UTF-8 so localized (e.g. Japanese)
+    // messages are not garbled on a non-UTF-8 console
+    // (Japanese Windows defaults to code page 932).
     private static void ConfigureStdout()
     {
+        var utf8 = new UTF8Encoding(false);
+        try
+        {
+            // Switches the console code page to UTF-8
+            // so the terminal reads the bytes correctly.
+            Console.OutputEncoding = utf8;
+        }
+        catch
+        {
+            // Ignore if stdout is redirected in a way
+            // that rejects an encoding change.
+        }
+
         var w = new StreamWriter(
-            Console.OpenStandardOutput())
+            Console.OpenStandardOutput(), utf8)
         {
             AutoFlush = true,
         };
