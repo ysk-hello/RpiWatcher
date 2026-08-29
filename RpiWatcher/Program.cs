@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace RpiWatcher;
 
@@ -105,10 +106,25 @@ internal static class Program
     // 標準出力を即時フラッシュにする。
     // systemd 経由だと既定では
     // バッファされ、journal に出ないため。
+    // あわせて UTF-8 を強制する。日本語 Windows の
+    // コンソールは既定がコードページ932のため、
+    // そのままだと日本語メッセージが文字化けする。
     private static void ConfigureStdout()
     {
+        var utf8 = new UTF8Encoding(false);
+        try
+        {
+            // コンソールのコードページを UTF-8 に切り替え、
+            // バイト列を正しく解釈させる。
+            Console.OutputEncoding = utf8;
+        }
+        catch
+        {
+            // リダイレクト等で切り替え不可なら無視。
+        }
+
         var w = new StreamWriter(
-            Console.OpenStandardOutput())
+            Console.OpenStandardOutput(), utf8)
         {
             AutoFlush = true,
         };
